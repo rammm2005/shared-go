@@ -7,21 +7,31 @@ import (
 	"github.com/rammm2005/shared-go/errors"
 )
 
+type StandardResponse struct {
+	Success bool        `json:"success"`
+	Data    interface{} `json:"data,omitempty"`
+	Error   interface{} `json:"error,omitempty"`
+}
+
+// standard JSON response for Echo
 func JSON(c echo.Context, data interface{}, err error) error {
 	if err != nil {
 		if appErr, ok := err.(*errors.AppError); ok {
-			return c.JSON(appErr.Code, echo.Map{
-				"success": false,
-				"error":   appErr.Message,
+			return c.JSON(appErr.Code, StandardResponse{
+				Success: false,
+				Error: echo.Map{
+					"message": appErr.Message,
+					"details": appErr.Details,
+				},
 			})
 		}
-		return c.JSON(http.StatusInternalServerError, echo.Map{
-			"success": false,
-			"error":   err.Error(),
+		return c.JSON(http.StatusInternalServerError, StandardResponse{
+			Success: false,
+			Error:   echo.Map{"message": err.Error()},
 		})
 	}
-	return c.JSON(http.StatusOK, echo.Map{
-		"success": true,
-		"data":    data,
+	return c.JSON(http.StatusOK, StandardResponse{
+		Success: true,
+		Data:    data,
 	})
 }
